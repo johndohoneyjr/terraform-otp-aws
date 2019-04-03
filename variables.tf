@@ -1,5 +1,9 @@
+variable "ami_key_pair_name_file" {
+  default="/Users/johndohoneyjr/.ssh/dohoney-se-demos-west.pem"
+} 
+
 variable "ami_key_pair_name" {
- default="dohoney-se-demos-west"
+  default="dohoney-se-demos-west"
 }
 
 variable "aws_region" {

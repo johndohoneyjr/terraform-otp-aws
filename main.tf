@@ -44,7 +44,7 @@ resource "aws_default_vpc" "default" {
 ## no SSH Headaches
 ##
 resource "aws_security_group" "tf_public_sg" {
-    name = "tf_public_sg"
+    name = "dohoney_sg"
     description = "PUBLIC SG"
     vpc_id      = "${aws_default_vpc.default.id}"
     #SSH
@@ -82,26 +82,22 @@ resource "aws_instance" "server" {
   instance_type               = "${var.instance_type}"
   key_name                    = "${var.ami_key_pair_name}"
   availability_zone           = "${data.aws_availability_zones.available.names[0]}"
+  vpc_security_group_ids      = ["${aws_security_group.tf_public_sg.id}"]
   associate_public_ip_address = "true"
+  user_data                   = "${data.template_file.bootstrap.rendered}"
 
   provisioner "remote-exec" {
     connection {
       type    = "ssh"
-      agent   = true
-      host    = "${aws_instance.server.public_ip}"
       user    = "centos"
-      timeout = "20s"
-      private_key = "${file("/Users/johndohoneyjr/.ssh/dohoney-se-demos-west.pem")}"
+      private_key = "${chomp(file("/Users/johndohoneyjr/.ssh/dohoney-se-demos-west.pem"))}"
     }
 
     inline = [
-      "sudo apt-get update",
-      "sudo apt install apt-transport-https ca-certificates curl software-properties-common -y",
-      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
-      "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable\"",
-      "sudo apt update",
-      "apt-cache policy docker-ce",
-      "sudo apt install docker-ce -y",
+      "sudo yum check-update",
+      "sudo curl -fsSL https://get.docker.com/ | sh",
+      "sudo systemctl start docker",
+      "sudo systemctl status docker",
       "sudo docker run -d -p 8080:8080 johndohoney/simplenodeapi"
     ]
   }
